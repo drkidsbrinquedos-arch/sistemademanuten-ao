@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🔧 Sistema de Manutenção - Com Backup</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 10px;
+        }
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            padding: 15px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+        }
+        h1 {
+            text-align: center;
+            color: #667eea;
+            margin-bottom: 5px;
+            font-size: 1.5em;
+        }
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 15px;
+            font-size: 0.85em;
+        }
+        .save-status {
+            text-align: center;
+            padding: 8px;
+            background: #48bb78;
+            color: white;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            font-size: 0.9em;
+        }
+        .btn {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            margin: 5px;
+            transition: all 0.3s;
+            font-size: 14px;
+        }
+        .btn-primary { background: #667eea; color: white; }
+        .btn-success { background: #48bb78; color: white; }
+        .btn-danger { background: #f56565; color: white; }
+        .btn-warning { background: #ed8936; color: white; }
+        .actions {
+            margin-bottom: 20px;
+            display: flex;
+            gap: 8px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+            color: #333;
+            font-size: 14px;
+        }
+        input, select, textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+        }
+        textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+        .card {
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            padding: 15px;
+            margin: 15px 0;
+            background: #f9f9f9;
+        }
+        .card h3 {
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+        .badge {
+            display: inline-block;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: bold;
+            margin: 5px 5px 0 0;
+        }
+        .badge-success { background: #48bb78; color: white; }
+        .badge-warning { background: #ed8936; color: white; }
+        .badge-danger { background: #f56565; color: white; }
+        .tabs {
+            display: flex;
+            gap: 5px;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #ddd;
+            overflow-x: auto;
+        }
+        .tab {
+            padding: 12px 15px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+            font-size: 13px;
+            font-weight: 600;
+            color: #666;
+            white-space: nowrap;
+        }
+        .tab.active {
+            border-bottom-color: #667eea;
+            color: #667eea;
+        }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px 15px;
+            border-radius: 12px;
+            text-align: center;
+        }
+        .stat-number {
+            font-size: 2em;
+            font-weight: bold;
+        }
+        .backup-info {
+            background: #e6f7ff;
+            border: 2px solid #4299e1;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 20px;
+            font-size: 0.9em;
+        }
+        @media (min-width: 768px) {
+            .stats { grid-template-columns: repeat(5, 1fr); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 Sistema de Manutenção Preventiva</h1>
+        <p class="subtitle">Controle de Higienização e Manutenção</p>
+        
+        <div class="save-status" id="saveStatus">
+            ✅ Dados salvos automaticamente no seu dispositivo
+        </div>
+
+        <div class="backup-info">
+            <strong>💾 Sistema de Backup:</strong><br>
+            • Dados salvos automaticamente<br>
+            • Faça backup regularmente (botão abaixo)<br>
+            • Último backup: <span id="lastBackup">Nenhum</span>
+        </div>
+        
+        <div class="actions">
+            <button class="btn btn-success" onclick="fazerBackup()">📥 Baixar Backup</button>
+            <button class="btn btn-warning" onclick="restaurarBackup()">📤 Restaurar Backup</button>
+            <button class="btn btn-primary" onclick="copiarDados()">📋 Copiar Dados</button>
+        </div>
+        <input type="file" id="fileInput" accept=".json" style="display:none">
+
+        <div class="stats">
+            <div class="stat-card">
+                <div class="stat-number" id="totalInflaveis">0</div>
+                <div>Infláveis</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="totalMecanicos">0</div>
+                <div>Mecânicos</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="totalJogos">0</div>
+                <div>Jogos</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="totalVeiculos">0</div>
+                <div>Veículos</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="totalAlertas">0</div>
+                <div>Alertas</div>
+            </div>
+        </div>
+
+        <div class="tabs">
+            <button class="tab active" onclick="showTab('inflaveis')">🎈 Infláveis</button>
+            <button class="tab" onclick="showTab('mecanicos')">⚙️ Mecânicos</button>
+            <button class="tab" onclick="showTab('jogos')">🎯 Jogos</button>
+            <button class="tab" onclick="showTab('veiculos')">🚗 Veículos</button>
+        </div>
+
+        <div id="inflaveis" class="tab-content active">
+            <h2>Cadastrar Inflável</h2>
+            <form onsubmit="adicionar(event, 'inflaveis')">
+                <div class="form-group">
+                    <label>Nome *</label>
+                    <input type="text" id="inf_nome" required>
+                </div>
+                <div class="form-group">
+                    <label>Tipo *</label>
+                    <select id="inf_tipo" required>
+                        <option>Pula-pula</option>
+                        <option>Tobogã</option>
+                        <option>Multiatividade</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Última Higienização *</label>
+                    <input type="date" id="inf_data" required>
+                </div>
+                <div class="form-group">
+                    <label>Observações</label>
+                    <textarea id="inf_obs"></textarea>
+                </div>
+                <button type="submit" class="btn btn-primary" style="width:100%">✅ Cadastrar</button>
+            </form>
+            <div id="lista_inflaveis"></div>
+        </div>
+
+        <div id="mecanicos" class="tab-content">
+            <h2>Cadastrar Mecânico</h2>
+            <form onsubmit="adicionar(event, 'mecanicos')">
+                <div class="form-group">
+                    <label>Nome *</label>
+                    <input type="text" id="mec_nome" required>
+                </div>
+                <div class="form-group">
+                    <label>Última Manutenção *</label>
+                    <input type="date" id="mec_data" required>
+                </div>
+                <div class="form-group">
+                    <label>Observações</label>
+                    <textarea id="mec_obs"></textarea>
+                </div>
+                <button type="submit" class="btn btn-primary" style="width:100%">✅ Cadastrar</button>
+            </form>
+            <div id="lista_mecanicos"></div>
+        </div>
+
+        <div id="jogos" class="tab-content">
+            <h2>Cadastrar Jogo/Mesa</h2>
+            <form onsubmit="adicionar(event, 'jogos')">
+                <div class="form-group">
+                    <label>Nome *</label>
+                    <input type="text" id="jog_nome" required>
+                </div>
+                <div class="form-group">
+                    <label>Última Reposição *</label>
+                    <input type="date" id="jog_data" required>
+                </div>
+                <div class="form-group">
+                    <label>Observações</label>
+                    <textarea id="jog_obs"></textarea>
+                </div>
+                <button type="submit" class="btn btn-primary" style="width:100%">✅ Cadastrar</button>
+            </form>
+            <div id="lista_jogos"></div>
+        </div>
+
+        <div id="veiculos" class="tab-content">
+            <h2>Cadastrar Veículo</h2>
+            <form onsubmit="adicionar(event, 'veiculos')">
+                <div class="form-group">
+                    <label>Identificação *</label>
+                    <input type="text" id="vei_nome" required>
+                </div>
+                <div class="form-group">
+                    <label>Última Troca de Óleo *</label>
+                    <input type="date" id="vei_data" required>
+                </div>
+                <div class="form-group">
+                    <label>Observações</label>
+                    <textarea id="vei_obs"></textarea>
+                </div>
+                <button type="submit" class="btn btn-primary" style="width:100%">✅ Cadastrar</button>
+            </form>
+            <div id="lista_veiculos"></div>
+        </div>
+    </div>
+
+    <script>
+        let dados = {
+            inflaveis: JSON.parse(localStorage.getItem('inflaveis')) || [],
+            mecanicos: JSON.parse(localStorage.getItem('mecanicos')) || [],
+            jogos: JSON.parse(localStorage.getItem('jogos')) || [],
+            veiculos: JSON.parse(localStorage.getItem('veiculos')) || []
+        };
+
+        // Auto-salvar a cada mudança
+        function salvarDados() {
+            Object.keys(dados).forEach(tipo => {
+                localStorage.setItem(tipo, JSON.stringify(dados[tipo]));
+            });
+            mostrarMensagemSalvo();
+        }
+
+        function mostrarMensagemSalvo() {
+            const status = document.getElementById('saveStatus');
+            status.textContent = '✅ Dados salvos em ' + new Date().toLocaleTimeString();
+            status.style.background = '#48bb78';
+            setTimeout(() => {
+                status.style.background = '#48bb78';
+            }, 2000);
+        }
+
+        function showTab(tab) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            event.target.classList.add('active');
+            document.getElementById(tab).classList.add('active');
+        }
+
+        function adicionar(e, tipo) {
+            e.preventDefault();
+            const prefixo = tipo.substring(0, 3);
+            const item = {
+                id: Date.now(),
+                nome: document.getElementById(prefixo + '_nome').value,
+                data: document.getElementById(prefixo + '_data').value,
+                obs: document.getElementById(prefixo + '_obs').value
+            };
+            if (tipo === 'inflaveis') item.tipo = document.getElementById('inf_tipo').value;
+            
+            dados[tipo].push(item);
+            salvarDados();
+            e.target.reset();
+            atualizar();
+            alert('✅ Cadastrado e salvo com sucesso!');
+        }
+
+        function excluir(tipo, id) {
+            if (confirm('Excluir este item?')) {
+                dados[tipo] = dados[tipo].filter(i => i.id !== id);
+                salvarDados();
+                atualizar();
+            }
+        }
+
+        function calcularDias(data) {
+            const diff = new Date() - new Date(data);
+            return Math.floor(diff / (1000 * 60 * 60 * 24));
+        }
+
+        function atualizar() {
+            document.getElementById('totalInflaveis').textContent = dados.inflaveis.length;
+            document.getElementById('totalMecanicos').textContent = dados.mecanicos.length;
+            document.getElementById('totalJogos').textContent = dados.jogos.length;
+            document.getElementById('totalVeiculos').textContent = dados.veiculos.length;
+
+            let alertas = 0;
+            ['inflaveis', 'mecanicos', 'jogos', 'veiculos'].forEach(tipo => {
+                const limite = tipo === 'veiculos' ? 40 : 30;
+                const container = document.getElementById('lista_' + tipo);
+                container.innerHTML = dados[tipo].map(item => {
+                    const dias = calcularDias(item.data);
+                    const badge = dias >= limite ? 'danger' : dias >= limite-5 ? 'warning' : 'success';
+                    if (dias >= limite-5) alertas++;
+                    return `
+                        <div class="card">
+                            <h3>${item.nome}</h3>
+                            ${item.tipo ? '<p><strong>Tipo:</strong> ' + item.tipo + '</p>' : ''}
+                            <p><strong>Última manutenção:</strong> ${new Date(item.data).toLocaleDateString()} (${dias} dias)</p>
+                            ${item.obs ? '<p><strong>Obs:</strong> ' + item.obs + '</p>' : ''}
+                            <span class="badge badge-${badge}">${dias >= limite ? '⚠️ Vencido' : dias >= limite-5 ? '⏰ Próximo' : '✅ OK'}</span>
+                            <br><button class="btn btn-danger" onclick="excluir('${tipo}', ${item.id})">🗑️ Excluir</button>
+                        </div>
+                    `;
+                }).join('');
+            });
+            document.getElementById('totalAlertas').textContent = alertas;
+        }
+
+        // SISTEMA DE BACKUP
+        function fazerBackup() {
+            const backup = {
+                dados: dados,
+                dataBackup: new Date().toISOString(),
+                versao: '1.0'
+            };
+            const json = JSON.stringify(backup, null, 2);
+            const blob = new Blob([json], {type: 'application/json'});
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'backup-manutencao-' + new Date().toISOString().split('T')[0] + '.json';
+            a.click();
+            
+            localStorage.setItem('ultimoBackup', new Date().toISOString());
+            atualizarInfoBackup();
+            alert('✅ Backup baixado com sucesso!\n\nGuarde este arquivo em um local seguro (Google Drive, Email, etc.)');
+        }
+
+        function restaurarBackup() {
+            const input = document.getElementById('fileInput');
+            input.onchange = e => {
+                const file = e.target.files[0];
+                const reader = new FileReader();
+                reader.onload = event => {
+                    try {
+                        const backup = JSON.parse(event.target.result);
+                        if (confirm('⚠️ ATENÇÃO!\n\nRestaurar o backup vai SUBSTITUIR todos os dados atuais.\n\nTem certeza?')) {
+                            dados = backup.dados;
+                            salvarDados();
+                            atualizar();
+                            alert('✅ Backup restaurado com sucesso!');
+                        }
+                    } catch {
+                        alert('❌ Erro ao restaurar backup!\n\nArquivo inválido.');
+                    }
+                };
+                reader.readAsText(file);
+            };
+            input.click();
+        }
+
+        function copiarDados() {
+            const textoCompleto = JSON.stringify(dados, null, 2);
+            navigator.clipboard.writeText(textoCompleto).then(() => {
+                alert('✅ Dados copiados!\n\nCole em um arquivo de texto e guarde como backup.');
+            }).catch(() => {
+                alert('📋 Copie manualmente:\n\n' + textoCompleto);
+            });
+        }
+
+        function atualizarInfoBackup() {
+            const ultimo = localStorage.getItem('ultimoBackup');
+            if (ultimo) {
+                const data = new Date(ultimo);
+                document.getElementById('lastBackup').textContent = data.toLocaleString();
+            }
+        }
+
+        // Inicializar
+        document.addEventListener('DOMContentLoaded', () => {
+            const hoje = new Date().toISOString().split('T')[0];
+            document.querySelectorAll('input[type="date"]').forEach(i => i.value = hoje);
+            atualizar();
+            atualizarInfoBackup();
+        });
+
+        // Auto-backup a cada 24 horas
+        setInterval(() => {
+            const ultimo = localStorage.getItem('ultimoBackup');
+            if (!ultimo || (Date.now() - new Date(ultimo).getTime()) > 86400000) {
+                if (confirm('🔔 Lembrete de Backup!\n\nFaz mais de 24h desde o último backup.\n\nDeseja fazer backup agora?')) {
+                    fazerBackup();
+                }
+            }
+        }, 3600000); // Verifica a cada hora
+    </script>
+</body>
+</html>
